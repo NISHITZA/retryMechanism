@@ -1,0 +1,22 @@
+<script>
+    function sendAgain()
+    {
+        location=location;
+    }
+</script>
+<h1>Enter the data</h1>
+<form action='/' method="POST">
+    <div>
+        <label>Enter the values to be sent</label>
+        <input type="text" id="send" name="send" required/>
+        <button type="submit">SendData</button>
+    </div>
+    <div>
+        <label>Send More Data</label>
+        <button type="button" onclick="sendAgain()">Send More Data</button>
+    </div>
+    <div>
+        <a href="/range">Send Range of Data</a>
+    </div>
+
+</form>
