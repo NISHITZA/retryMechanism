@@ -1,26 +1,43 @@
 const express = require('express');
 const app=express();
+const winston=require('winston');
 const mongoose = require('mongoose');
 require('dotenv').config();
-const uri=process.env.ATLAS_URI;
+const databaseUri=process.env.ATLAS_URI2;
 
 const port = process.env.PORT||5000;
-const send=require('./routes/send2');
-app.use('/',send);
+const mqttRoute=require('./routes/mqtt');
 
-mongoose.connect(uri,{useNewUrlParser:true, useCreateIndex:true, useUnifiedTopology:true});
-const connection=mongoose.connection;
-try{
-    connection.once('open',()=>{
-        console.log('DB connected');
+//Format for logging using winston
+const loggerFormat=winston.format.combine(
+    winston.format.colorize(),
+    winston.format.timestamp(),
+    winston.format.align(),
+    winston.format.printf((info=>`${info.timestamp}  ${info.message}`)
+    )
+)
+//Creating logger using Winston
+const logger = {
+    win: winston.createLogger({
+        level:'info',
+        format:loggerFormat,
+        transports:[new winston.transports.File({ filename:'app-info.log'})],
     })
 }
-catch (err) {
-    console.log('Server error');
-}
+//View engine set to Embedded Javascript
+app.set('view engine','ejs');
+app.use(express.urlencoded({ extended:false }));
+app.use('/',mqttRoute);
 
-
-
-app.listen(port,()=>{
-    console.log('server listening ');
-});
+//Connection to MongoDB database
+mongoose.connect(databaseUri,{useNewUrlParser:true, useCreateIndex:true, useUnifiedTopology:true})
+        .then(res=>{
+            logger.win.info('Database has been connected');
+            app.listen(port,()=>{
+                logger.win.info('Server listening ');
+            });
+        })
+        .catch(error=>{
+            logger.win.error('Error while connecting to database');
+        })
+module.exports = app;
